@@ -1,19 +1,39 @@
 import flet as ft
+from flet_core import Container
 
 
-def build_profile_section():
+def build_left_section():
     def on_settings_click(e):
-        # Add your settings functionality here
-        pass
+        def close_diaolog(e):
+            global pg
+            page = pg
+            page.dialog.open = False
+            page.update()
+
+        global pg
+        page = pg
+        diaolog = ft.AlertDialog(title=ft.Text("Information"),
+                                 content=ft.Text("Test Text"),
+                                 actions=[ft.TextButton(text="Close", on_click=close_diaolog)],
+                                 open=True,
+
+                                 )
+
+        page.dialog = diaolog
+        page.update()
+    pass
 
     # Add a settings button with an icon
     settings_button = ft.IconButton(icon="settings", on_click=on_settings_click)
 
     def on_name_change(e):
-        profile_title.value = name_input.value + "'s Profile"
-        if name_input.value == "":
-            profile_title.value = name_input.value + "Profile"
+        global profile_name
+        profile_name = name_input.value
+        profile_title.value = profile_name + "'s Profile"
+        if profile_name == "":
+            profile_title.value = profile_name + "Profile"
         profile_title.update()
+
 
     name_input = ft.TextField(label="Enter your name", on_change=on_name_change, border_radius = 10,)
 
@@ -31,9 +51,9 @@ def build_profile_section():
 
     )
 
-    profile_title = ft.Text("Profile", style="headline6")
+    profile_title = ft.Text("Profile", style="headline6", weight=ft.FontWeight.BOLD, size=16)
 
-    profile_section_container = ft.Container(
+    left_section_container: Container = ft.Container(
             content=ft.Column([
                 profile_title,
                 name_input,
@@ -43,17 +63,29 @@ def build_profile_section():
             border=ft.border.all(1, ft.colors.BLACK),
             border_radius=10,
         )
-    return profile_section_container
+    return left_section_container
 
 
 
 def build_chat_section():
+
     chat_messages = ft.ListView(expand=1, spacing=10)
 
     def send_message(e):
+        global profile_name
         if message_input.value:
-            chat_messages.controls.append(ft.SelectionArea(ft.Text(message_input.value)))
+
+            name= ft.Text(profile_name+ ": ", weight=ft.FontWeight.BOLD, size=16)
+            text = ft.Text(message_input.value, size=16)
+
+            message_container = ft.Row(controls=[name, text])
+            message_container.spacing = 0
+
+            chat_messages.controls.append(ft.SelectionArea(message_container))
             message_input.value = ""
+
+            chat_messages.scroll_to(offset=-1)
+
             chat_messages.update()
             message_input.update()
             message_input.focus()
@@ -63,7 +95,7 @@ def build_chat_section():
 
     return ft.Container(
         content=ft.Column([
-            ft.Text("Chat", style="headline6"),
+            ft.Text("Chat", style="headline6", weight=ft.FontWeight.BOLD, size=18),
             chat_messages,
             ft.Row([message_input, send_button], spacing=10)
         ], spacing=10),
@@ -74,11 +106,16 @@ def build_chat_section():
     )
 
 def main(page: ft.Page):
+    global profile_name
+    global pg
+    pg = page
+    profile_name = "name"
+
     page.title = "Talk"
-    profile_section = build_profile_section()
+    left_section = build_left_section()
     chat_section = build_chat_section()
 
-    page.add(ft.Row([profile_section, chat_section], expand=1))
+    page.add(ft.Row([left_section, chat_section], expand=1))
 
 
 ft.app(target=main)
